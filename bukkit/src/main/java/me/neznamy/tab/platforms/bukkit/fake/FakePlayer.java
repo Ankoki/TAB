@@ -1,17 +1,24 @@
 package me.neznamy.tab.platforms.bukkit.fake;
 
 import me.neznamy.tab.api.TabPlayer;
+import me.neznamy.tab.platforms.bukkit.BukkitTAB;
 import me.neznamy.tab.platforms.bukkit.BukkitTabPlayer;
 import me.neznamy.tab.platforms.bukkit.platform.BukkitPlatform;
+import me.neznamy.tab.platforms.bukkit.scoreboard.packet.PacketScoreboard;
+import me.neznamy.tab.platforms.bukkit.tablist.PacketTabList1193;
 import me.neznamy.tab.shared.TAB;
+import me.neznamy.tab.shared.chat.EnumChatFormat;
 import me.neznamy.tab.shared.chat.TabComponent;
+import me.neznamy.tab.shared.platform.Scoreboard;
 import me.neznamy.tab.shared.platform.TabList;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class FakePlayer {
 
@@ -27,19 +34,27 @@ public class FakePlayer {
         for (String name : players) {
             boolean logged = false;
             FakePlayer p = new FakePlayer(name);
+            List<FakePlayer> change = new ArrayList<>();
             for (FakePlayer player : AVAILABLE_PLAYERS) {
                 if (name.equalsIgnoreCase(player.getName())) {
-                    AVAILABLE_PLAYERS.remove(player);
-                    AVAILABLE_PLAYERS.add(p);
+                    change.add(player);
                     logged = true;
                 }
             }
+            for (FakePlayer player : change) {
+                AVAILABLE_PLAYERS.remove(player);
+                AVAILABLE_PLAYERS.add(p);
+            }
+            change.clear();
             for (FakePlayer player : LOGGED_IN_PLAYERS) {
                 if (name.equalsIgnoreCase(player.getName())) {
-                    LOGGED_IN_PLAYERS.remove(player);
-                    LOGGED_IN_PLAYERS.add(p);
+                    change.add(player);
                     logged = true;
                 }
+            }
+            for (FakePlayer player : change) {
+                LOGGED_IN_PLAYERS.remove(player);
+                LOGGED_IN_PLAYERS.add(p);
             }
             if (!logged)
                 AVAILABLE_PLAYERS.add(p);
@@ -54,8 +69,15 @@ public class FakePlayer {
             if (tabPlayer == null) // Well we tried :p
                 return;
         }
-        for (FakePlayer fakePlayer : LOGGED_IN_PLAYERS)
+        List<FakePlayer> update = new ArrayList<>();
+        for (FakePlayer fakePlayer : LOGGED_IN_PLAYERS) {
             fakePlayer.joinFor(tabPlayer);
+            update.add(fakePlayer);
+        }
+        for (FakePlayer fakePlayer : update) {
+            AVAILABLE_PLAYERS.remove(fakePlayer);
+            LOGGED_IN_PLAYERS.add(fakePlayer);
+        }
     }
 
     /**
@@ -72,8 +94,7 @@ public class FakePlayer {
             players[i] = AVAILABLE_PLAYERS.get(i);
         for (FakePlayer player : players) {
             player.join();
-            AVAILABLE_PLAYERS.remove(player);
-            LOGGED_IN_PLAYERS.add(player);
+            TAB.getInstance().debug(player + " is logging in.");
         }
     }
 
@@ -91,6 +112,7 @@ public class FakePlayer {
             players[i] = LOGGED_IN_PLAYERS.get(i);
         for (FakePlayer player : players) {
             player.quit();
+            TAB.getInstance().debug(player + " is quitting.");
             LOGGED_IN_PLAYERS.remove(player);
             AVAILABLE_PLAYERS.add(player);
         }
@@ -147,20 +169,31 @@ public class FakePlayer {
             this.joinFor(tabPlayer);
     }
 
+    private static final List<Integer> ping = new ArrayList<>();
+
+    static {
+        ping.add(599);
+        ping.add(299);
+        ping.add(149);
+    }
+
     private void joinFor(TabPlayer tabPlayer) {
-        TabList.Entry entry = TabList.Entry.displayName(this.uuid, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
-        Map<UUID, TabList.Entry> entries = new ConcurrentHashMap<>();
         BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
-        TabList.Entry e = new TabList.Entry(player.getUniqueId(),
-                player.getName(),
-                player.getSkin(),
-                player.getPing(),
-                player.getGamemode(),
-                null);
-        entries.put(player.getUniqueId(), e);
+        Player bukkitPlayer = player.getPlayer();
         TabList list = player.getTabList();
-        list.removeEntries(new ArrayList<>(entries.keySet()));
-        list.addEntry(entry);
+        if (list instanceof PacketTabList1193) {
+            PacketTabList1193 tab = (PacketTabList1193) list;
+            TabList.Entry entry = TabList.Entry.displayName(this.uuid, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
+            Collections.shuffle(ping);
+            entry.setLatency(ping.get(0));
+            Object playerInfoDataPacket = tab.createPacket(TabList.Action.ADD_PLAYER, entry);
+            PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
+            // Team team = bukkitPlayer.getScoreboard().getTeam("zzzfakeplayers");
+            // team.addEntry(this.getName());
+            // team.addEntry(this.getUuid().toString());
+            // team.addEntry(FakeConfig.DEFAULT_TAG + " " + this.getName());
+            System.out.println("FakePlayer[" + name + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
+        }
     }
 
     /**
@@ -170,8 +203,20 @@ public class FakePlayer {
         for (TabPlayer tabPlayer : TAB.getInstance().getOnlinePlayers()) {
             BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
             TabList list = player.getTabList();
-            list.removeEntry(this.uuid);
+            if (list instanceof PacketTabList1193) {
+                PacketTabList1193 tab = (PacketTabList1193) list;
+                TabList.Entry entry = TabList.Entry.displayName(this.uuid, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
+                Collections.shuffle(ping);
+                entry.setLatency(ping.get(0));
+                Object playerInfoDataPacket = tab.createPacket(TabList.Action.REMOVE_PLAYER, entry);
+                PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
+            }
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.name + "[" + this.uuid + "]";
     }
 
 }

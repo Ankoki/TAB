@@ -10,6 +10,7 @@ public class FakeConfig {
 
     private File configFile;
 
+    public static boolean FAKE_PLAYERS_ENABLED;
     public static String DEFAULT_TAG;
     public static double INCREASE;
 
@@ -23,6 +24,7 @@ public class FakeConfig {
         if (!this.configFile.exists())
             tab.saveResource("fake-config.yml", true);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(this.configFile);
+        FAKE_PLAYERS_ENABLED = config.getBoolean("enabled");
         DEFAULT_TAG = config.getString("default-tag");
         INCREASE = config.getDouble("increase");
         FakePlayer.reassignPlayers(validate(config.getStringList("fake-player-names")));

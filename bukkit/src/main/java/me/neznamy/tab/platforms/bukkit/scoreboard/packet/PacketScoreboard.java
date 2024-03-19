@@ -54,7 +54,7 @@ public class PacketScoreboard extends Scoreboard<BukkitTabPlayer> {
     private static ScorePacketData scorePacketData;
     @Getter private static TeamPacketData teamPacketData;
     @Getter private static DisplayPacketData displayPacketData;
-    private static PacketSender packetSender;
+    public static PacketSender packetSender;
 
     private static Method ChatSerializer_DESERIALIZE;
     private static final ComponentCache<TabComponent, Object> componentCache = new ComponentCache<>(1000,

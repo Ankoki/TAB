@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.neznamy.tab.platforms.bukkit.*;
 import me.neznamy.tab.platforms.bukkit.entity.PacketEntityView;
+import me.neznamy.tab.platforms.bukkit.fake.FakePlayer;
 import me.neznamy.tab.platforms.bukkit.header.HeaderFooter;
 import me.neznamy.tab.platforms.bukkit.hook.BukkitPremiumVanishHook;
 import me.neznamy.tab.platforms.bukkit.nms.BukkitReflection;
@@ -143,9 +144,18 @@ public class BukkitPlatform implements BackendPlatform {
                 manager.registerPlayerPlaceholder("%vault-suffix%", refresh, p -> chat.getPlayerSuffix((Player) p.getPlayer()));
             }
         }
+        // Add our fake players to the online placeholder.
+        manager.registerServerPlaceholder(TabConstants.Placeholder.ONLINE, 1000, () -> {
+            int count = 0;
+            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
+                if (!player.isVanished()) count++;
+            }
+            return count + FakePlayer.getAmountOnline();
+        });
         // Override for the PAPI placeholder to prevent console errors on unsupported server versions when ping field changes
         manager.registerPlayerPlaceholder("%player_ping%", manager.getRefreshInterval("%player_ping%"),
                 p -> ((TabPlayer) p).getPing());
+        manager.registerPlayerPlaceholder("%fake%", 1000, p -> p != null ? 0 : 1);
         BackendPlatform.super.registerPlaceholders();
     }
 

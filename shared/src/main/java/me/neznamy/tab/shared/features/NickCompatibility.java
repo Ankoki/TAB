@@ -48,8 +48,7 @@ public class NickCompatibility extends TabFeature implements EntryAddListener {
             packetPlayer.setNickname(name);
             TAB.getInstance().debug("Processing name change of player " + packetPlayer.getName() + " to " + name);
             processNameChange(packetPlayer);
-        }
-        if (redis != null) {
+        } else if (redis != null) {
             RedisPlayer redisPlayer = redis.getRedisPlayers().get(id);
             if (redisPlayer == null) return;
             if (!redisPlayer.getNickname().equals(name)) {

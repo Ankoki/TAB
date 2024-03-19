@@ -22,7 +22,7 @@ import java.util.UUID;
  */
 public class PacketTabList17 extends TabListBase {
 
-    private static TriFunctionWithException<String, Boolean, Integer, Object> newPacket;
+    public static TriFunctionWithException<String, Boolean, Integer, Object> newPacket;
     private static PacketSender packetSender;
 
     /** Because entries are identified by names and not uuids on 1.7- */

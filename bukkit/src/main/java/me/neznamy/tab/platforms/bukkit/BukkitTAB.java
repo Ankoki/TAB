@@ -1,6 +1,5 @@
 package me.neznamy.tab.platforms.bukkit;
 
-import lombok.Getter;
 import me.neznamy.tab.platforms.bukkit.fake.FakeConfig;
 import me.neznamy.tab.platforms.bukkit.fake.FakeListeners;
 import me.neznamy.tab.platforms.bukkit.platform.BukkitPlatform;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class BukkitTAB extends JavaPlugin {
 
-    @Getter
     @NotNull // Can ignore this warning, this class has onEnable called pretty much immediately after being created.
     private FakeConfig config;
 
