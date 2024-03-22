@@ -3,7 +3,6 @@ package me.neznamy.tab.platforms.bukkit.scoreboard.packet;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import me.neznamy.tab.platforms.bukkit.fake.FakePlayer;
 import me.neznamy.tab.platforms.bukkit.nms.BukkitReflection;
 import me.neznamy.tab.shared.TAB;
 import me.neznamy.tab.shared.TabConstants;
@@ -268,7 +267,7 @@ public class TeamPacketData {
      * @return  Team with specified parameters
      */
     @SneakyThrows
-    private Object createTeam(@NonNull String teamName, @NonNull String prefix, @Nullable Object prefixComponent,
+    public Object createTeam(@NonNull String teamName, @NonNull String prefix, @Nullable Object prefixComponent,
                               @NonNull String suffix, @Nullable Object suffixComponent,
                               @NonNull Scoreboard.NameVisibility visibility, @NonNull Scoreboard.CollisionRule collision,
                               int options, @NonNull EnumChatFormat color) {

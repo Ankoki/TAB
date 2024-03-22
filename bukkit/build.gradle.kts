@@ -14,5 +14,6 @@ dependencies {
         exclude("org.ow2.asm", "asm")
         exclude("net.md-5", "bungeecord-chat")
     }
+    compileOnly("com.comphenix.protocol:ProtocolLib:5.1.0")
     compileOnly("com.github.LeonMangler:PremiumVanishAPI:2.8.8")
 }

@@ -8,6 +8,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class FakeConfig {
 
+    private BukkitTAB tab;
     private File configFile;
 
     public static boolean FAKE_PLAYERS_ENABLED;
@@ -15,10 +16,11 @@ public class FakeConfig {
     public static double INCREASE;
 
     public FakeConfig(BukkitTAB tab) {
-        load(tab);
+        this.tab = tab;
+        load();
     }
 
-    public void load(BukkitTAB tab) {
+    public void load() {
         if (this.configFile == null)
             this.configFile = new File(tab.getDataFolder() + File.separator + "fake-config.yml");
         if (!this.configFile.exists())

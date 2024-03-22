@@ -1,29 +1,35 @@
 package me.neznamy.tab.platforms.bukkit.fake;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.events.InternalStructure;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.utility.MinecraftReflection;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import me.neznamy.tab.api.TabPlayer;
-import me.neznamy.tab.platforms.bukkit.BukkitTAB;
 import me.neznamy.tab.platforms.bukkit.BukkitTabPlayer;
 import me.neznamy.tab.platforms.bukkit.platform.BukkitPlatform;
 import me.neznamy.tab.platforms.bukkit.scoreboard.packet.PacketScoreboard;
 import me.neznamy.tab.platforms.bukkit.tablist.PacketTabList1193;
 import me.neznamy.tab.shared.TAB;
-import me.neznamy.tab.shared.chat.EnumChatFormat;
 import me.neznamy.tab.shared.chat.TabComponent;
-import me.neznamy.tab.shared.platform.Scoreboard;
 import me.neznamy.tab.shared.platform.TabList;
-import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FakePlayer {
 
     private static final List<FakePlayer> AVAILABLE_PLAYERS = new ArrayList<>();
     private static final List<FakePlayer> LOGGED_IN_PLAYERS = new ArrayList<>();
+    private static ProtocolManager protocolManager;
+
+    public static void setProtocolManager(ProtocolManager protocolManager) {
+        FakePlayer.protocolManager = protocolManager;
+    }
 
     /**
      * Updates the players with new names.
@@ -59,6 +65,31 @@ public class FakePlayer {
             if (!logged)
                 AVAILABLE_PLAYERS.add(p);
         }
+    }
+
+    /**
+     * Constructs the fake player team for the given player.
+     *
+     * @param player the player to construct it for.
+     */
+    public static void constructTeam(Player player) {
+        PacketContainer teamPacket = protocolManager.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
+        teamPacket.getStrings().write(0, "zzzfakeplayers");
+        teamPacket.getIntegers().write(0, 0);
+        Optional<InternalStructure> optional = teamPacket.getOptionalStructures().read(0);
+        if (optional.isPresent()) {
+            InternalStructure structure = optional.get();
+            structure.getChatComponents().write(0, WrappedChatComponent.fromText(""));
+            structure.getIntegers().write(0, 1);
+            structure.getStrings().write(0, "always");
+            structure.getStrings().write(1, "always");
+            structure.getChatComponents().write(1, WrappedChatComponent.fromText(""));
+            structure.getChatComponents().write(2, WrappedChatComponent.fromText(""));
+            structure.getEnumModifier(ChatColor.class, MinecraftReflection.getMinecraftClass("EnumChatFormat")).write(0, ChatColor.WHITE);
+            teamPacket.getOptionalStructures().write(0, Optional.of(structure));
+        }
+        teamPacket.getModifier().write(2, Collections.emptyList());
+        // protocolManager.sendServerPacket(player, teamPacket);
     }
 
     public static void joinFor(Player player) {
@@ -179,19 +210,24 @@ public class FakePlayer {
 
     private void joinFor(TabPlayer tabPlayer) {
         BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
-        Player bukkitPlayer = player.getPlayer();
         TabList list = player.getTabList();
+        Collections.shuffle(ping);
         if (list instanceof PacketTabList1193) {
             PacketTabList1193 tab = (PacketTabList1193) list;
-            TabList.Entry entry = TabList.Entry.displayName(this.uuid, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
-            Collections.shuffle(ping);
-            entry.setLatency(ping.get(0));
+            TabList.Entry entry = new TabList.Entry(this.uuid, this.name, null, ping.get(0), 0, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
             Object playerInfoDataPacket = tab.createPacket(TabList.Action.ADD_PLAYER, entry);
             PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
-            // Team team = bukkitPlayer.getScoreboard().getTeam("zzzfakeplayers");
-            // team.addEntry(this.getName());
-            // team.addEntry(this.getUuid().toString());
-            // team.addEntry(FakeConfig.DEFAULT_TAG + " " + this.getName());
+            PacketContainer teamPacket = protocolManager.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
+            teamPacket.getStrings().write(0, "zzzfakeplayers");
+            teamPacket.getIntegers().write(0, 3);
+            Optional<InternalStructure> optional = teamPacket.getOptionalStructures().read(0);
+            if (optional.isPresent()) {
+                InternalStructure structure = optional.get();
+                structure.getIntegers().write(0, 1);
+                teamPacket.getOptionalStructures().write(0, Optional.of(structure));
+            }
+            teamPacket.getModifier().write(2, Collections.singletonList(this.name));
+            protocolManager.sendServerPacket(player.getPlayer(), teamPacket);
             System.out.println("FakePlayer[" + name + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
         }
     }
@@ -205,9 +241,8 @@ public class FakePlayer {
             TabList list = player.getTabList();
             if (list instanceof PacketTabList1193) {
                 PacketTabList1193 tab = (PacketTabList1193) list;
-                TabList.Entry entry = TabList.Entry.displayName(this.uuid, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
                 Collections.shuffle(ping);
-                entry.setLatency(ping.get(0));
+                TabList.Entry entry = new TabList.Entry(this.uuid, this.name, null, ping.get(0), 0, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
                 Object playerInfoDataPacket = tab.createPacket(TabList.Action.REMOVE_PLAYER, entry);
                 PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
             }

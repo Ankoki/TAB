@@ -8,6 +8,7 @@ dependencyResolutionManagement {
         maven("https://repo.viaversion.com/") // ViaVersion
         maven("https://repo.opencollab.dev/maven-snapshots/") // Floodgate
         maven("https://repo.purpurmc.org/snapshots") // Purpur
+        maven("https://repo.dmulloy2.net/repository/public/") // ProtocolLib
         maven("https://repo.spongepowered.org/repository/maven-public/") // Sponge
         maven("https://jitpack.io") // PremiumVanish, Vault, YamlAssist, RedisBungee
         maven("https://repo.md-5.net/content/groups/public/") // LibsDisguises

@@ -1,7 +1,9 @@
 package me.neznamy.tab.platforms.bukkit;
 
+import com.comphenix.protocol.ProtocolLibrary;
 import me.neznamy.tab.platforms.bukkit.fake.FakeConfig;
 import me.neznamy.tab.platforms.bukkit.fake.FakeListeners;
+import me.neznamy.tab.platforms.bukkit.fake.FakePlayer;
 import me.neznamy.tab.platforms.bukkit.platform.BukkitPlatform;
 import me.neznamy.tab.platforms.bukkit.platform.FoliaPlatform;
 import me.neznamy.tab.shared.TAB;
@@ -15,14 +17,16 @@ import org.jetbrains.annotations.NotNull;
 public class BukkitTAB extends JavaPlugin {
 
     @NotNull // Can ignore this warning, this class has onEnable called pretty much immediately after being created.
-    private FakeConfig config;
+    private static FakeConfig config;
 
     @Override
     public void onEnable() {
         boolean folia = ReflectionUtils.classExists("io.papermc.paper.threadedregions.RegionizedServer");
         TAB.create(folia ? new FoliaPlatform(this) : new BukkitPlatform(this));
-        this.config = new FakeConfig(this);
+        BukkitTAB.config = new FakeConfig(this);
         this.getServer().getPluginManager().registerEvents(new FakeListeners(), this);
+        if (FakeListeners.PROTOCOL_LIB_FOUND)
+            FakePlayer.setProtocolManager(ProtocolLibrary.getProtocolManager());
     }
 
     @Override
