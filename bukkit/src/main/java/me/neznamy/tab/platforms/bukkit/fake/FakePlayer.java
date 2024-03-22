@@ -228,7 +228,7 @@ public class FakePlayer {
             }
             teamPacket.getModifier().write(2, Collections.singletonList(this.name));
             protocolManager.sendServerPacket(player.getPlayer(), teamPacket);
-            System.out.println("FakePlayer[" + name + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
+            // System.out.println("FakePlayer[" + name + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
         }
     }
 
