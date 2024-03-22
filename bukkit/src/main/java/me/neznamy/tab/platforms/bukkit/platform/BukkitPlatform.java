@@ -146,16 +146,22 @@ public class BukkitPlatform implements BackendPlatform {
         }
         // Add our fake players to the online placeholder.
         manager.registerServerPlaceholder(TabConstants.Placeholder.ONLINE, 1000, () -> {
+            int count = FakePlayer.getOnlinePlayers().size();
+            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
+                if (!player.isVanished()) count++;
+            }
+            return count;
+        });
+        manager.registerServerPlaceholder(TabConstants.Placeholder.SERVER_ONLINE, 1000, () -> {
             int count = 0;
             for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
                 if (!player.isVanished()) count++;
             }
-            return count + FakePlayer.getAmountOnline();
+            return count + FakePlayer.getOnlinePlayers().size();
         });
         // Override for the PAPI placeholder to prevent console errors on unsupported server versions when ping field changes
         manager.registerPlayerPlaceholder("%player_ping%", manager.getRefreshInterval("%player_ping%"),
                 p -> ((TabPlayer) p).getPing());
-        manager.registerPlayerPlaceholder("%fake%", 1000, p -> p != null ? 0 : 1);
         BackendPlatform.super.registerPlaceholders();
     }
 

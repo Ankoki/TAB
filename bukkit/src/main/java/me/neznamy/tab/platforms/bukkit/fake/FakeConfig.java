@@ -12,6 +12,7 @@ public class FakeConfig {
     private File configFile;
 
     public static boolean FAKE_PLAYERS_ENABLED;
+    public static boolean DEBUG;
     public static String DEFAULT_TAG;
     public static double INCREASE;
 
@@ -26,6 +27,7 @@ public class FakeConfig {
         if (!this.configFile.exists())
             tab.saveResource("fake-config.yml", true);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(this.configFile);
+        DEBUG = config.getBoolean("debug", false);
         FAKE_PLAYERS_ENABLED = config.getBoolean("enabled");
         DEFAULT_TAG = config.getString("default-tag");
         INCREASE = config.getDouble("increase");

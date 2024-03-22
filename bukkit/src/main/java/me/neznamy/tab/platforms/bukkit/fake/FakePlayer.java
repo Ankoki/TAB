@@ -23,6 +23,14 @@ import java.util.*;
 
 public class FakePlayer {
 
+    private static final List<Integer> PING_OPTIONS = new ArrayList<>();
+
+    static {
+        PING_OPTIONS.add(599);
+        PING_OPTIONS.add(299);
+        PING_OPTIONS.add(149);
+    }
+
     private static final List<FakePlayer> AVAILABLE_PLAYERS = new ArrayList<>();
     private static final List<FakePlayer> LOGGED_IN_PLAYERS = new ArrayList<>();
     private static ProtocolManager protocolManager;
@@ -89,7 +97,7 @@ public class FakePlayer {
             teamPacket.getOptionalStructures().write(0, Optional.of(structure));
         }
         teamPacket.getModifier().write(2, Collections.emptyList());
-        // protocolManager.sendServerPacket(player, teamPacket);
+        // protocolManager.sendServerPacket(player, teamPacket); // Servers connected to a bungee already have the scoreboard team created for some godforsaken reason.
     }
 
     public static void joinFor(Player player) {
@@ -100,15 +108,8 @@ public class FakePlayer {
             if (tabPlayer == null) // Well we tried :p
                 return;
         }
-        List<FakePlayer> update = new ArrayList<>();
-        for (FakePlayer fakePlayer : LOGGED_IN_PLAYERS) {
+        for (FakePlayer fakePlayer : LOGGED_IN_PLAYERS)
             fakePlayer.joinFor(tabPlayer);
-            update.add(fakePlayer);
-        }
-        for (FakePlayer fakePlayer : update) {
-            AVAILABLE_PLAYERS.remove(fakePlayer);
-            LOGGED_IN_PLAYERS.add(fakePlayer);
-        }
     }
 
     /**
@@ -127,6 +128,10 @@ public class FakePlayer {
             player.join();
             TAB.getInstance().debug(player + " is logging in.");
         }
+        for (FakePlayer player : players) {
+            AVAILABLE_PLAYERS.remove(player);
+            LOGGED_IN_PLAYERS.add(player);
+        }
     }
 
     /**
@@ -143,14 +148,11 @@ public class FakePlayer {
             players[i] = LOGGED_IN_PLAYERS.get(i);
         for (FakePlayer player : players) {
             player.quit();
-            TAB.getInstance().debug(player + " is quitting.");
+            if (FakeConfig.DEBUG)
+                System.out.println(player + " is quitting.");
             LOGGED_IN_PLAYERS.remove(player);
             AVAILABLE_PLAYERS.add(player);
         }
-    }
-
-    public static int getAmountOnline() {
-        return LOGGED_IN_PLAYERS.size();
     }
 
     public static List<FakePlayer> getOnlinePlayers() {
@@ -161,6 +163,8 @@ public class FakePlayer {
     private final String name;
     @NotNull
     private final UUID uuid;
+    private final int ping;
+    private final int gamemode = 0;
 
     /**
      * Creates a new fake player with the given name.
@@ -170,6 +174,8 @@ public class FakePlayer {
     public FakePlayer(@NotNull String name) {
         this.name = name;
         this.uuid = UUID.nameUUIDFromBytes(("OfflinePlayer" + name).getBytes(StandardCharsets.UTF_8));
+        Collections.shuffle(PING_OPTIONS);
+        this.ping = PING_OPTIONS.get(0);
     }
 
     /**
@@ -192,6 +198,14 @@ public class FakePlayer {
         return uuid;
     }
 
+    public int getPing() {
+        return ping;
+    }
+
+    public int getGamemode() {
+        return gamemode;
+    }
+
     /**
      * Makes the fake player join the server.
      */
@@ -200,21 +214,13 @@ public class FakePlayer {
             this.joinFor(tabPlayer);
     }
 
-    private static final List<Integer> ping = new ArrayList<>();
-
-    static {
-        ping.add(599);
-        ping.add(299);
-        ping.add(149);
-    }
-
     private void joinFor(TabPlayer tabPlayer) {
         BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
         TabList list = player.getTabList();
-        Collections.shuffle(ping);
+        Collections.shuffle(PING_OPTIONS);
         if (list instanceof PacketTabList1193) {
             PacketTabList1193 tab = (PacketTabList1193) list;
-            TabList.Entry entry = new TabList.Entry(this.uuid, this.name, null, ping.get(0), 0, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
+            TabList.Entry entry = this.createEntry();
             Object playerInfoDataPacket = tab.createPacket(TabList.Action.ADD_PLAYER, entry);
             PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
             PacketContainer teamPacket = protocolManager.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
@@ -228,7 +234,8 @@ public class FakePlayer {
             }
             teamPacket.getModifier().write(2, Collections.singletonList(this.name));
             protocolManager.sendServerPacket(player.getPlayer(), teamPacket);
-            // System.out.println("FakePlayer[" + name + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
+            if (FakeConfig.DEBUG)
+                System.out.println("FakePlayer[" + this + "].joinFor(TabPlayer[" + tabPlayer.getName() + "])");
         }
     }
 
@@ -236,22 +243,29 @@ public class FakePlayer {
      * Makes the fake player leave the server.
      */
     public void quit() {
+        TabList.Entry entry = this.createEntry();
         for (TabPlayer tabPlayer : TAB.getInstance().getOnlinePlayers()) {
             BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
             TabList list = player.getTabList();
             if (list instanceof PacketTabList1193) {
                 PacketTabList1193 tab = (PacketTabList1193) list;
-                Collections.shuffle(ping);
-                TabList.Entry entry = new TabList.Entry(this.uuid, this.name, null, ping.get(0), 0, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
                 Object playerInfoDataPacket = tab.createPacket(TabList.Action.REMOVE_PLAYER, entry);
                 PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
-            }
+                if (FakeConfig.DEBUG)
+                    System.out.println("FakePlayer[" + this + "].quit()[" + tabPlayer.getName() + "]");
+            } else if (FakeConfig.DEBUG)
+                System.out.println("FakePlayer[" + this + "].quit()[" + tabPlayer.getName() + "] FALLTHROUGH");
         }
+    }
+
+    @NotNull
+    public TabList.Entry createEntry() {
+        return new TabList.Entry(this.uuid, this.name, null, this.ping, this.gamemode, TabComponent.optimized(FakeConfig.DEFAULT_TAG + " " + this.name));
     }
 
     @Override
     public String toString() {
-        return this.name + "[" + this.uuid + "]";
+        return this.name + "[" + this.uuid + "," + this.ping + "," + this.gamemode + "]";
     }
 
 }

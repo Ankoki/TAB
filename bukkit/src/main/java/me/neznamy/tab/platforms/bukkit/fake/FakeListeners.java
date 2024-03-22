@@ -31,8 +31,8 @@ public class FakeListeners implements Listener {
         if (!FakeConfig.FAKE_PLAYERS_ENABLED || !PROTOCOL_LIB_FOUND)
             return;
         int amount = (int) Math.floor(BukkitUtils.getOnlinePlayers().length * FakeConfig.INCREASE);
-        if (amount < FakePlayer.getAmountOnline())
-            FakePlayer.quit(FakePlayer.getAmountOnline() - amount);
+        if (amount < FakePlayer.getOnlinePlayers().size())
+            FakePlayer.quit(FakePlayer.getOnlinePlayers().size() - amount);
     }
 
     @EventHandler
