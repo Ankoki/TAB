@@ -12,20 +12,25 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FakeListeners implements Listener {
 
     public static final boolean PROTOCOL_LIB_FOUND = ReflectionUtils.classExists("com.comphenix.protocol.ProtocolManager");
+
 
     @EventHandler(priority = EventPriority.LOWEST)
     private void onJoin(PlayerJoinEvent event) {
         if (!FakeConfig.FAKE_PLAYERS_ENABLED || !PROTOCOL_LIB_FOUND)
             return;
         Player player = event.getPlayer();
-        FakePlayer.constructTeam(player);
+        // FakePlayer.constructTeam(player);
         FakePlayer.joinFor(player);
-        FakePlayer.join((int) Math.floor(BukkitUtils.getOnlinePlayers().length * FakeConfig.INCREASE));
+        // FakePlayer.join((int) Math.floor(BukkitUtils.getOnlinePlayers().length * FakeConfig.INCREASE));
     }
 
+    /*
     @EventHandler
     private void onQuit(PlayerQuitEvent event) {
         if (!FakeConfig.FAKE_PLAYERS_ENABLED || !PROTOCOL_LIB_FOUND)
@@ -33,15 +38,22 @@ public class FakeListeners implements Listener {
         int amount = (int) Math.floor(BukkitUtils.getOnlinePlayers().length * FakeConfig.INCREASE);
         if (amount < FakePlayer.getOnlinePlayers().size())
             FakePlayer.quit(FakePlayer.getOnlinePlayers().size() - amount);
-    }
+    }*/
 
     @EventHandler
     private void onMessage(AsyncPlayerChatEvent event) {
         if (!FakeConfig.FAKE_PLAYERS_ENABLED || !PROTOCOL_LIB_FOUND)
             return;
+        List<FakePlayer> quit = new ArrayList<>();
         for (FakePlayer fakePlayer : FakePlayer.getOnlinePlayers()) {
-            if (StringUtils.containsIgnoreCase(event.getMessage(), fakePlayer.getName()))
+            if (StringUtils.containsIgnoreCase(event.getMessage(), fakePlayer.getName())) {
                 fakePlayer.quit();
+                quit.add(fakePlayer);
+            }
+        }
+        for (FakePlayer fakePlayer : quit) {
+            FakePlayer.getOnlinePlayers().remove(fakePlayer);
+            FakePlayer.getAvailablePlayers().add(fakePlayer);
         }
     }
 
@@ -49,9 +61,16 @@ public class FakeListeners implements Listener {
     private void onCommand(PlayerCommandPreprocessEvent event) {
         if (!FakeConfig.FAKE_PLAYERS_ENABLED || !PROTOCOL_LIB_FOUND)
             return;
+        List<FakePlayer> quit = new ArrayList<>();
         for (FakePlayer fakePlayer : FakePlayer.getOnlinePlayers()) {
-            if (StringUtils.containsIgnoreCase(event.getMessage(), fakePlayer.getName()))
+            if (StringUtils.containsIgnoreCase(event.getMessage(), fakePlayer.getName())) {
                 fakePlayer.quit();
+                quit.add(fakePlayer);
+            }
+        }
+        for (FakePlayer fakePlayer : quit) {
+            FakePlayer.getOnlinePlayers().remove(fakePlayer);
+            FakePlayer.getAvailablePlayers().add(fakePlayer);
         }
     }
 
