@@ -4,8 +4,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.InternalStructure;
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.utility.MinecraftReflection;
-import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import me.neznamy.tab.api.TabPlayer;
 import me.neznamy.tab.platforms.bukkit.BukkitTabPlayer;
 import me.neznamy.tab.platforms.bukkit.BukkitUtils;
@@ -15,7 +13,6 @@ import me.neznamy.tab.platforms.bukkit.tablist.PacketTabList1193;
 import me.neznamy.tab.shared.TAB;
 import me.neznamy.tab.shared.chat.TabComponent;
 import me.neznamy.tab.shared.platform.TabList;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +33,11 @@ public class FakePlayer {
     private static final List<FakePlayer> LOGGED_IN_PLAYERS = new ArrayList<>();
     private static ProtocolManager protocolManager;
 
+    /**
+     * Sets the protocol manager for the fake players.
+     *
+     * @param protocolManager the new protocol manager.
+     */
     public static void setProtocolManager(ProtocolManager protocolManager) {
         FakePlayer.protocolManager = protocolManager;
     }
@@ -77,30 +79,10 @@ public class FakePlayer {
     }
 
     /**
-     * Constructs the fake player team for the given player.
+     * Joins all the current online fake players for the given player.
      *
-     * @param player the player to construct it for.
+     * @param player the player.
      */
-    public static void constructTeam(Player player) {
-        PacketContainer teamPacket = protocolManager.createPacket(PacketType.Play.Server.SCOREBOARD_TEAM);
-        teamPacket.getStrings().write(0, "zzzfakeplayers");
-        teamPacket.getIntegers().write(0, 0);
-        Optional<InternalStructure> optional = teamPacket.getOptionalStructures().read(0);
-        if (optional.isPresent()) {
-            InternalStructure structure = optional.get();
-            structure.getChatComponents().write(0, WrappedChatComponent.fromText(""));
-            structure.getIntegers().write(0, 1);
-            structure.getStrings().write(0, "always");
-            structure.getStrings().write(1, "always");
-            structure.getChatComponents().write(1, WrappedChatComponent.fromText(""));
-            structure.getChatComponents().write(2, WrappedChatComponent.fromText(""));
-            structure.getEnumModifier(ChatColor.class, MinecraftReflection.getMinecraftClass("EnumChatFormat")).write(0, ChatColor.WHITE);
-            teamPacket.getOptionalStructures().write(0, Optional.of(structure));
-        }
-        teamPacket.getModifier().write(2, Collections.emptyList());
-        // protocolManager.sendServerPacket(player, teamPacket); // Servers connected to a bungee already have the scoreboard team created for some godforsaken reason.
-    }
-
     public static void joinFor(Player player) {
         TabPlayer tabPlayer = TAB.getInstance().getPlayer(player.getUniqueId());
         if (tabPlayer == null) {
@@ -156,10 +138,20 @@ public class FakePlayer {
         }
     }
 
+    /**
+     * Gets all the online fake players.
+     *
+     * @return the online fake players.
+     */
     public static List<FakePlayer> getOnlinePlayers() {
         return LOGGED_IN_PLAYERS;
     }
 
+    /**
+     * Gets all the available fake players.
+     *
+     * @return the available fake players.
+     */
     public static List<FakePlayer> getAvailablePlayers() {
         return AVAILABLE_PLAYERS;
     }
@@ -205,10 +197,20 @@ public class FakePlayer {
         return uuid;
     }
 
+    /**
+     * Gets the ping of this fake player.
+     *
+     * @return the ping.
+     */
     public int getPing() {
         return ping;
     }
 
+    /**
+     * Gets the gamemode of this fake player.
+     *
+     * @return the gamemode.
+     */
     public int getGamemode() {
         return gamemode;
     }
@@ -221,6 +223,11 @@ public class FakePlayer {
             this.joinFor(tabPlayer);
     }
 
+    /**
+     * Makes the fake player join for the given player.
+     *
+     * @param tabPlayer the player to join for.
+     */
     private void joinFor(TabPlayer tabPlayer) {
         BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
         TabList list = player.getTabList();
@@ -250,22 +257,9 @@ public class FakePlayer {
      */
     public void quit() {
         PacketContainer removePacket = protocolManager.createPacket(PacketType.Play.Server.PLAYER_INFO_REMOVE);
-        // removePacket.getIntegers().write(0, 1);
         removePacket.getUUIDLists().write(0, Collections.singletonList(this.uuid));
-        for (Player player : BukkitUtils.getOnlinePlayers()) {/*
-            BukkitTabPlayer player = (BukkitTabPlayer) tabPlayer;
-            TabList list = player.getTabList();
-            if (list instanceof PacketTabList1193) {
-                PacketTabList1193 tab = (PacketTabList1193) list;
-                Object playerInfoDataPacket = tab.createPacket(TabList.Action.REMOVE_PLAYER, this.entry);
-                PacketScoreboard.packetSender.sendPacket(player.getPlayer(), playerInfoDataPacket);
-                if (FakeConfig.DEBUG)
-                    System.out.println("FakePlayer[" + this + "].quit()[" + tabPlayer.getName() + "]");
-            } else if (FakeConfig.DEBUG)
-                System.out.println("FakePlayer[" + this + "].quit()[" + tabPlayer.getName() + "] FALLTHROUGH");
-            */
+        for (Player player : BukkitUtils.getOnlinePlayers())
             protocolManager.sendServerPacket(player, removePacket);
-        }
     }
 
     @Override

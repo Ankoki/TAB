@@ -1,4 +1,4 @@
-# This configuration cannot be reloaded in game. You must restart the server for changes to be applied.
+# This configuration can be reloaded in game, apart from fake-player-names. New additions to that list requires a server restart.
 #
 # Whether fake players will be enabled or not.
 enabled: true

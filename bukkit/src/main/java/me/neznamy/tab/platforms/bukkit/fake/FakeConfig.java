@@ -8,8 +8,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class FakeConfig {
 
-    private BukkitTAB tab;
+    private final BukkitTAB tab;
     private File configFile;
+    private YamlConfiguration config;
 
     public static boolean FAKE_PLAYERS_ENABLED;
     public static boolean DEBUG;
@@ -18,23 +19,27 @@ public class FakeConfig {
 
     public FakeConfig(BukkitTAB tab) {
         this.tab = tab;
-        load();
+        this.load();
+        // We assign players when the config is loaded due to the amount of fake player names.
+        FakePlayer.reassignPlayers(validate(this.config.getStringList("fake-player-names")));
     }
 
+    /**
+     * Loads the configuration file. Does not handle fake player names.
+     */
     public void load() {
         if (this.configFile == null)
             this.configFile = new File(tab.getDataFolder() + File.separator + "fake-config.yml");
         if (!this.configFile.exists())
             tab.saveResource("fake-config.yml", true);
-        YamlConfiguration config = YamlConfiguration.loadConfiguration(this.configFile);
-        DEBUG = config.getBoolean("debug", false);
-        FAKE_PLAYERS_ENABLED = config.getBoolean("enabled");
-        DEFAULT_TAG = config.getString("default-tag");
-        INCREASE = config.getDouble("increase");
-        FakePlayer.reassignPlayers(validate(config.getStringList("fake-player-names")));
+        this.config = YamlConfiguration.loadConfiguration(this.configFile);
+        DEBUG = this.config.getBoolean("debug", false);
+        FAKE_PLAYERS_ENABLED = this.config.getBoolean("enabled");
+        DEFAULT_TAG = this.config.getString("default-tag");
+        INCREASE = this.config.getDouble("increase");
     }
 
-    public List<String> validate(List<String> original) {
+    private List<String> validate(List<String> original) {
         List<String> valid = new ArrayList<>();
         for (String name : original) {
             if (name.matches("^[a-zA-Z0-9_]{3,16}$"))
