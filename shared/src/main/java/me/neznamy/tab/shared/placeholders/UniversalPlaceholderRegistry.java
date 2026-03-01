@@ -82,19 +82,6 @@ public class UniversalPlaceholderRegistry {
         manager.registerServerPlaceholder(TabConstants.Placeholder.DATE, () -> placeholders.getDateFormat().format(new Date(System.currentTimeMillis() + (int)(placeholders.getTimeOffset() *3600000))));
         manager.registerServerPlaceholder(TabConstants.Placeholder.MEMORY_USED, () -> PerformanceUtil.toString((int) ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/1024/1024)));
         manager.registerServerPlaceholder(TabConstants.Placeholder.MEMORY_USED_GB, () -> decimal2.format((float)(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) /1024/1024/1024));
-        manager.registerServerPlaceholder(TabConstants.Placeholder.ONLINE, () -> {
-            int count = 0;
-            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
-                if (!player.isVanished()) count++;
-            }
-            ProxySupport proxy = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PROXY_SUPPORT);
-            if (proxy != null) {
-                for (ProxyPlayer player : proxy.getProxyPlayers().values()) {
-                    if (!player.isVanished()) count++;
-                }
-            }
-            return PerformanceUtil.toString(count);
-        });
         manager.registerServerPlaceholder(TabConstants.Placeholder.STAFF_ONLINE, () -> {
             int count = 0;
             for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
