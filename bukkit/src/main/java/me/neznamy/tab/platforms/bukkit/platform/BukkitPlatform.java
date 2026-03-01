@@ -94,7 +94,6 @@ public class BukkitPlatform implements BackendPlatform {
 
     /** Implementation for creating new instances using content available on the server */
     @NotNull
-    @Getter
     @Setter
     private ImplementationProvider implementationProvider;
 
@@ -528,7 +527,7 @@ public class BukkitPlatform implements BackendPlatform {
         map.put("server-name", Bukkit.getName());
         map.put("server-version", Bukkit.getBukkitVersion().split("-")[0]);
         map.put("craftbukkit-package", serverPackage);
-        map.put("tab-version", /*ProjectVariables.PLUGIN_VERSION*/ "6.0.0");
+        map.put("tab-version", ProjectVariables.PLUGIN_VERSION);
         Map<String, Object> plugins = new LinkedHashMap<>();
         for (Plugin p : Bukkit.getPluginManager().getPlugins()) {
             plugins.put(p.getDescription().getName(), p.getDescription().getVersion());

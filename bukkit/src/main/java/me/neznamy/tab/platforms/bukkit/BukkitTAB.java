@@ -67,7 +67,6 @@ public class BukkitTAB extends JavaPlugin {
             }
         };
         this.runnable.runTaskTimer(this, 0L, 15 * 20L);
-
     }
 
 }
